@@ -1,73 +1,73 @@
-import { Navigate } from "react-router-dom";
+    import { Navigate } from "react-router-dom";
 
-import {
-  onAuthStateChanged,
-} from "firebase/auth";
+    import {
+    onAuthStateChanged,
+    } from "firebase/auth";
 
-import {
-  useEffect,
-  useState,
-} from "react";
+    import {
+    useEffect,
+    useState,
+    } from "react";
 
-import { auth } from "../src/pages/firebase";
+    import { auth } from "../src/pages/firebase";
 
-export default function ProtectedRoute({
-  children,
-}) {
+    export default function ProtectedRoute({
+    children,
+    }) {
 
-  const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(true);
 
-  const [isAuth, setIsAuth] = useState(false);
+    const [isAuth, setIsAuth] = useState(false);
 
-  useEffect(() => {
+    useEffect(() => {
 
-    const unsubscribe = onAuthStateChanged(
-      auth,
-      (user) => {
+        const unsubscribe = onAuthStateChanged(
+        auth,
+        (user) => {
 
-        if (user) {
-          setIsAuth(true);
-        } else {
-          setIsAuth(false);
+            if (user) {
+            setIsAuth(true);
+            } else {
+            setIsAuth(false);
+            }
+
+            setLoading(false);
+
         }
+        );
 
-        setLoading(false);
+        return () => unsubscribe();
 
-      }
-    );
+    }, []);
 
-    return () => unsubscribe();
+    if (loading) {
 
-  }, []);
+        return (
 
-  if (loading) {
+        <div
+            className="
+            min-h-screen
+            bg-black
+            text-white
 
-    return (
+            flex
+            items-center
+            justify-center
+            "
+        >
+            Loading...
+        </div>
 
-      <div
-        className="
-        min-h-screen
-        bg-black
-        text-white
+        );
 
-        flex
-        items-center
-        justify-center
-        "
-      >
-        Loading...
-      </div>
+    }
 
-    );
+    if (!isAuth) {
 
-  }
+        return <Navigate to="/login" />;
 
-  if (!isAuth) {
+    }
 
-    return <Navigate to="/login" />;
+    return children;
 
-  }
-
-  return children;
-
-}
+    }
