@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-
+import { useState } from "react";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 
@@ -13,6 +13,41 @@ import {
 } from "lucide-react";
 
 export default function Contact() {
+
+  const [name, setName] = useState("");
+const [email, setEmail] = useState("");
+const [phone, setPhone] = useState("");
+const [message, setMessage] = useState("");
+
+const handleSendMessage = (e) => {
+
+  e.preventDefault();
+
+  if (!name || !phone || !message) {
+
+    alert("Mohon isi semua data");
+
+    return;
+
+  }
+
+  const text = `
+Halo KSPORTS 👋
+
+Nama: ${name}
+Email: ${email}
+No WhatsApp: ${phone}
+
+Pesan:
+${message}
+  `;
+
+  const whatsappURL = `https://wa.me/6285174285688?text=${encodeURIComponent(text)}`;
+
+  window.open(whatsappURL, "_blank");
+
+};
+
 
   return (
 
@@ -374,7 +409,7 @@ export default function Contact() {
                   </a>
 
                   <a
-                    href="#"
+                    href="https://www.instagram.com/ksports_id/"
 
                     className="
                     w-14 h-14
@@ -427,109 +462,86 @@ export default function Contact() {
                   Kirim Pesan
                 </h2>
 
-                <form className="space-y-6">
+                <form
+                onSubmit={handleSendMessage}
+                className="space-y-6"
+              >
 
                   <input
-                    type="text"
-                    placeholder="Nama Lengkap"
-
-                    className="
-                    w-full
-
-                    bg-black/50
-
-                    border
-                    border-zinc-700
-
-                    rounded-2xl
-
-                    px-6
-                    py-5
-
-                    outline-none
-
-                    focus:border-red-500
-
-                    transition-all
-                    "
-                  />
+                type="text"
+                placeholder="Nama Lengkap"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="
+                w-full
+                bg-black/50
+                border
+                border-zinc-700
+                rounded-2xl
+                px-6
+                py-5
+                outline-none
+                focus:border-red-500
+                transition-all
+                "
+              />
+                  <input
+                  type="email"
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="
+                  w-full
+                  bg-black/50
+                  border
+                  border-zinc-700
+                  rounded-2xl
+                  px-6
+                  py-5
+                  outline-none
+                  focus:border-red-500
+                  transition-all
+                  "
+                />
 
                   <input
-                    type="email"
-                    placeholder="Email"
-
-                    className="
-                    w-full
-
-                    bg-black/50
-
-                    border
-                    border-zinc-700
-
-                    rounded-2xl
-
-                    px-6
-                    py-5
-
-                    outline-none
-
-                    focus:border-red-500
-
-                    transition-all
-                    "
-                  />
-
-                  <input
-                    type="text"
-                    placeholder="Nomor WhatsApp"
-
-                    className="
-                    w-full
-
-                    bg-black/50
-
-                    border
-                    border-zinc-700
-
-                    rounded-2xl
-
-                    px-6
-                    py-5
-
-                    outline-none
-
-                    focus:border-red-500
-
-                    transition-all
-                    "
-                  />
+  type="text"
+  placeholder="Nomor WhatsApp"
+  value={phone}
+  onChange={(e) => setPhone(e.target.value)}
+  className="
+  w-full
+  bg-black/50
+  border
+  border-zinc-700
+  rounded-2xl
+  px-6
+  py-5
+  outline-none
+  focus:border-red-500
+  transition-all
+  "
+/>
 
                   <textarea
-                    rows="6"
-                    placeholder="Tulis pesan anda..."
-
-                    className="
-                    w-full
-
-                    bg-black/50
-
-                    border
-                    border-zinc-700
-
-                    rounded-2xl
-
-                    px-6
-                    py-5
-
-                    outline-none
-
-                    focus:border-red-500
-
-                    transition-all
-
-                    resize-none
-                    "
-                  />
+  rows="6"
+  placeholder="Tulis pesan anda..."
+  value={message}
+  onChange={(e) => setMessage(e.target.value)}
+  className="
+  w-full
+  bg-black/50
+  border
+  border-zinc-700
+  rounded-2xl
+  px-6
+  py-5
+  outline-none
+  focus:border-red-500
+  transition-all
+  resize-none
+  "
+/>
 
                   <button
                     type="submit"

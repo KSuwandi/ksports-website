@@ -1,7 +1,7 @@
 import AOS from "aos";
 import "aos/dist/aos.css";
-
-import { useEffect, useState } from "react";
+import { Helmet } from "react-helmet-async";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { collection, onSnapshot } from "firebase/firestore";
@@ -9,64 +9,76 @@ import { db } from "./pages/firebase";
 
 import { motion } from "framer-motion";
 
+import {
+  Star,
+  Quote,
+  MessageCircle,
+  Flame,
+  ArrowRight,
+} from "lucide-react";
+
+import { formatPrice } from "./utils/formatPrice";
+
 import Navbar from "../components/Navbar";
 import HeroSection from "../components/HeroSection";
 import LoadingScreen from "../components/LoadingScreen";
 import Footer from "../components/Footer";
 
-import {
-  Flame,
-  MessageCircle,
-  Star,
-  Quote,
-} from "lucide-react";
-
 export default function App() {
 
+  /* =========================
+     STATE
+  ========================= */
   const [products, setProducts] = useState([]);
-  const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
   const [loading, setLoading] = useState(true);
 
+  const [search, setSearch] = useState("");
+
+  const [selectedCategory, setSelectedCategory] =
+    useState("All");
+
+  const [sortBy, setSortBy] =
+    useState("default");
+
+  const [currentPage, setCurrentPage] =
+    useState(1);
+
+  const productsPerPage = 8;
+
   /* =========================
-     TESTIMONIAL DATA
+     TESTIMONIALS
   ========================= */
   const testimonials = [
     {
       id: 1,
       name: "Andi Pratama",
       city: "Jakarta",
-      text: "Kualitas alat fitness sangat premium dan harga jauh lebih murah dibanding toko lain.",
+      text: "Kualitas alat fitness sangat premium.",
     },
+
     {
       id: 2,
       name: "Michael Tan",
       city: "Bekasi",
-      text: "Pelayanan cepat, instalasi rapih, dan admin sangat responsif di WhatsApp.",
+      text: "Pelayanan cepat dan admin responsif.",
     },
+
     {
       id: 3,
       name: "Rizky Saputra",
       city: "Bogor",
-      text: "Sudah order treadmill dan home gym. Barang original dan sangat recommended.",
-    },
-    {
-      id: 4,
-      name: "Kevin Wijaya",
-      city: "Tangerang",
-      text: "Showroom offline keren dan pilihan produknya lengkap banget.",
+      text: "Barang original dan recommended.",
     },
   ];
 
   /* =========================
-     AOS INIT
+     AOS
   ========================= */
   useEffect(() => {
 
     AOS.init({
       duration: 1000,
       once: true,
-      easing: "ease-out-cubic",
     });
 
   }, []);
@@ -89,7 +101,7 @@ export default function App() {
 
         setTimeout(() => {
           setLoading(false);
-        }, 1500);
+        }, 1200);
 
       }
     );
@@ -97,6 +109,103 @@ export default function App() {
     return () => unsubscribe();
 
   }, []);
+
+  /* =========================
+     DISCOUNT PRODUCTS
+  ========================= */
+  const discountProducts = products.filter(
+    (product) => product.discount > 0
+  );
+
+  /* =========================
+     FILTER + SORT
+  ========================= */
+  const filteredProducts = useMemo(() => {
+
+    let filtered = [...products];
+
+    /* SEARCH */
+    filtered = filtered.filter((product) =>
+      product.name
+        ?.toLowerCase()
+        .includes(search.toLowerCase())
+    );
+
+    /* CATEGORY */
+    if (selectedCategory !== "All") {
+
+      filtered = filtered.filter(
+        (product) =>
+          product.category === selectedCategory
+      );
+
+    }
+
+    /* SORT */
+    switch (sortBy) {
+
+      case "lowest":
+        filtered.sort((a, b) => a.price - b.price);
+        break;
+
+      case "highest":
+        filtered.sort((a, b) => b.price - a.price);
+        break;
+
+      case "az":
+        filtered.sort((a, b) =>
+          a.name.localeCompare(b.name)
+        );
+        break;
+
+      case "za":
+        filtered.sort((a, b) =>
+          b.name.localeCompare(a.name)
+        );
+        break;
+
+      default:
+        break;
+
+    }
+
+    return filtered;
+
+  }, [
+    products,
+    search,
+    selectedCategory,
+    sortBy,
+  ]);
+
+  /* =========================
+     RESET PAGE
+  ========================= */
+  useEffect(() => {
+
+    setCurrentPage(1);
+
+  }, [
+    search,
+    selectedCategory,
+    sortBy,
+  ]);
+
+  /* =========================
+     PAGINATION
+  ========================= */
+  const totalPages = Math.ceil(
+    filteredProducts.length / productsPerPage
+  );
+
+  const startIndex =
+    (currentPage - 1) * productsPerPage;
+
+  const currentProducts =
+    filteredProducts.slice(
+      startIndex,
+      startIndex + productsPerPage
+    );
 
   /* =========================
      LOADING
@@ -107,87 +216,15 @@ export default function App() {
 
   return (
 
-    <div className="relative bg-black text-white min-h-screen overflow-hidden">
+    <div className="bg-black text-white min-h-screen overflow-hidden">
 
       {/* =========================
-          BACKGROUND EFFECT
-      ========================= */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-
-        <div
-          className="
-          absolute
-          top-[10%]
-          left-[5%]
-          w-[400px]
-          h-[400px]
-          rounded-full
-          bg-red-500/20
-          blur-[140px]
-          animate-float1
-          "
-        />
-
-        <div
-          className="
-          absolute
-          top-[50%]
-          right-[10%]
-          w-[300px]
-          h-[300px]
-          rounded-full
-          bg-red-600/10
-          blur-[120px]
-          animate-float2
-          "
-        />
-
-      </div>
-
-      {/* =========================
-          STYLE
+          CUSTOM STYLE
       ========================= */}
       <style>{`
 
-        @keyframes marquee {
-          0% {
-            transform: translateX(0%);
-          }
-
-          100% {
-            transform: translateX(-50%);
-          }
-        }
-
-        @keyframes float1 {
-          0% {
-            transform: translateY(0px);
-          }
-
-          50% {
-            transform: translateY(-30px);
-          }
-
-          100% {
-            transform: translateY(0px);
-          }
-        }
-
-        @keyframes float2 {
-          0% {
-            transform: translateY(0px);
-          }
-
-          50% {
-            transform: translateY(30px);
-          }
-
-          100% {
-            transform: translateY(0px);
-          }
-        }
-
         @keyframes testimonialScroll {
+
           0% {
             transform: translateX(0);
           }
@@ -195,544 +232,640 @@ export default function App() {
           100% {
             transform: translateX(-50%);
           }
-        }
 
-        .animate-float1 {
-          animation: float1 8s ease-in-out infinite;
-        }
-
-        .animate-float2 {
-          animation: float2 10s ease-in-out infinite;
         }
 
         .testimonial-scroll {
           animation: testimonialScroll 28s linear infinite;
         }
 
+        @keyframes whatsappFloat {
+
+          0% {
+            transform: translateY(0px);
+          }
+
+          50% {
+            transform: translateY(-10px);
+          }
+
+          100% {
+            transform: translateY(0px);
+          }
+
+        }
+
+        .whatsapp-float {
+          animation: whatsappFloat 3s ease-in-out infinite;
+        }
+
       `}</style>
 
-      {/* =========================
-          MAIN CONTENT
-      ========================= */}
-      <div className="relative z-10">
+      <Navbar />
 
-        {/* NAVBAR */}
-        <Navbar />
-
-       {/* HERO */}
+      {/* HERO */}
       <HeroSection />
-
-      {/* PROMO BANNER */}
-        {/* =========================
+{/* =========================
     PREMIUM PROMO BANNER
 ========================= */}
-<section className="relative px-6 pt-10 pb-16">
+<section className="relative px-6 -mt-10 z-20">
 
-  <div
-    data-aos="zoom-in"
+  <motion.div
+    initial={{
+      opacity: 0,
+      y: 40,
+    }}
+
+    whileInView={{
+      opacity: 1,
+      y: 0,
+    }}
+
+    transition={{
+      duration: 0.8,
+    }}
+
     className="
+    relative
+
     max-w-7xl
     mx-auto
 
-    relative
     overflow-hidden
 
     rounded-[40px]
 
-    bg-gradient-to-r
-    from-red-700
-    via-red-600
-    to-red-500
+    border
+    border-white/10
 
-    p-[1px]
+    bg-gradient-to-br
+    from-red-600
+    via-red-700
+    to-black
 
-    shadow-[0_0_80px_rgba(239,68,68,0.35)]
+    p-10
+    md:p-14
+
+    shadow-[0_20px_100px_rgba(239,68,68,0.35)]
     "
   >
 
-    {/* INNER */}
+    {/* GLOW EFFECT */}
+    <div
+      className="
+      absolute
+      top-0
+      left-0
+
+      w-[350px]
+      h-[350px]
+
+      bg-white/10
+
+      rounded-full
+
+      blur-[120px]
+      "
+    />
+
+    <div
+      className="
+      absolute
+      bottom-0
+      right-0
+
+      w-[350px]
+      h-[350px]
+
+      bg-red-400/20
+
+      rounded-full
+
+      blur-[120px]
+      "
+    />
+
+    {/* CONTENT */}
     <div
       className="
       relative
+      z-10
 
-      rounded-[40px]
+      flex
+      flex-col
+      lg:flex-row
 
-      bg-black
+      items-center
+      justify-between
 
-      px-8
-      md:px-16
-
-      py-14
-
-      overflow-hidden
+      gap-10
       "
     >
 
-      {/* GLOW */}
-      <div
-        className="
-        absolute
-        -top-20
-        -right-20
+      {/* LEFT */}
+      <div className="max-w-2xl">
 
-        w-[300px]
-        h-[300px]
-
-        rounded-full
-
-        bg-red-500/20
-
-        blur-[120px]
-        "
-      />
-
-      {/* CONTENT */}
-      <div
-        className="
-        relative
-        z-10
-
-        flex
-        flex-col
-        lg:flex-row
-
-        items-center
-        justify-between
-
-        gap-10
-        "
-      >
-
-        {/* LEFT */}
-        <div className="max-w-2xl">
-
-          <div
-            className="
-            inline-flex
-            items-center
-            gap-2
-
-            px-5
-            py-2
-
-            rounded-full
-
-            bg-red-500/10
-            border
-            border-red-500/30
-
-            text-red-400
-            text-sm
-            font-bold
-            tracking-[3px]
-            uppercase
-            "
-          >
-            🔥 Promo Terbatas
-          </div>
-
-          <h2
-            className="
-            text-4xl
-            md:text-6xl
-
-            font-black
-
-            leading-tight
-
-            mt-7
-            "
-          >
-            GRATIS ONGKIR
-
-            <span
-              className="
-              block
-
-              bg-gradient-to-r
-              from-red-500
-              via-red-300
-              to-red-600
-
-              bg-clip-text
-              text-transparent
-              "
-            >
-              + FREE INSTALASI
-            </span>
-
-          </h2>
-
-          <p
-            className="
-            text-zinc-400
-
-            text-lg
-            leading-relaxed
-
-            mt-6
-            "
-          >
-            Khusus area Jabodetabek. 
-            Dapatkan alat fitness premium dengan harga terbaik,
-            pengiriman cepat, dan pemasangan GRATIS dari tim KSPORTS.
-          </p>
-
-        </div>
-
-        {/* RIGHT */}
+        {/* BADGE */}
         <div
           className="
-          flex
-          flex-col
-          sm:flex-row
+          inline-flex
+          items-center
+          gap-3
 
-          gap-4
+          px-6 py-3
+
+          rounded-full
+
+          bg-white/10
+          border border-white/20
+
+          text-white
+          text-sm
+          font-black
+          tracking-[3px]
+          uppercase
+
+          backdrop-blur-xl
+
+          mb-8
           "
         >
 
-          {/* BUTTON */}
-          <a
-            href="https://wa.me/6285174285688"
-            target="_blank"
-            rel="noreferrer"
+          <Flame
+            size={18}
+            className="animate-pulse"
+          />
+
+          Special Promo KSPORTS
+
+        </div>
+
+        {/* TITLE */}
+        <h2
+          className="
+          text-4xl
+          md:text-6xl
+
+          font-black
+          leading-tight
+          "
+        >
+
+          GRATIS ONGKIR
+
+          <span
             className="
-            px-8
-            py-5
+            block
 
-            rounded-2xl
-
-            bg-gradient-to-r
-            from-red-600
-            to-red-500
-
-            hover:from-red-500
-            hover:to-red-400
-
-            text-white
-            font-black
-
-            transition-all
-            duration-300
-
-            hover:scale-105
-
-            shadow-[0_0_40px_rgba(239,68,68,0.4)]
+            text-white/80
             "
           >
-            Chat Sekarang
-          </a>
+            JABODETABEK
+          </span>
 
-          {/* BUTTON */}
-          <a
-            href="#produk"
-            className="
-            px-8
-            py-5
+        </h2>
 
-            rounded-2xl
+        {/* SUBTITLE */}
+        <p
+          className="
+          mt-6
 
-            bg-zinc-900
-            hover:bg-zinc-800
+          text-white/80
+          text-lg
+          md:text-xl
 
-            border
-            border-white/10
+          leading-relaxed
+          "
+        >
+          Nikmati promo spesial pembelian alat fitness premium
+          dengan GRATIS ongkos kirim dan GRATIS pemasangan
+          untuk seluruh area Jabodetabek.
+        </p>
 
-            text-white
-            font-black
+        {/* FEATURES */}
+        <div className="flex flex-wrap gap-4 mt-8">
 
-            transition-all
-            duration-300
+          {[
+            "Free Ongkir",
+            "Free Instalasi",
+            "Garansi Produk",
+            "Original Quality",
+          ].map((item) => (
 
-            hover:scale-105
-            "
-          >
-            Lihat Produk
-          </a>
+            <div
+              key={item}
+              className="
+              px-5 py-3
+
+              rounded-2xl
+
+              bg-white/10
+              border border-white/10
+
+              backdrop-blur-xl
+
+              text-sm
+              font-bold
+              "
+            >
+              ✅ {item}
+            </div>
+
+          ))}
 
         </div>
 
       </div>
 
+      {/* RIGHT */}
+      <motion.div
+
+        animate={{
+          y: [0, -12, 0],
+        }}
+
+        transition={{
+          duration: 3,
+          repeat: Infinity,
+        }}
+
+        className="
+        flex
+        flex-col
+
+        items-center
+        justify-center
+
+        text-center
+        "
+      >
+
+        <div
+          className="
+          w-[220px]
+          h-[220px]
+
+          rounded-full
+
+          bg-white/10
+
+          border
+          border-white/20
+
+          backdrop-blur-2xl
+
+          flex
+          flex-col
+          items-center
+          justify-center
+
+          shadow-[0_0_60px_rgba(255,255,255,0.15)]
+          "
+        >
+
+          <span
+            className="
+            text-sm
+            tracking-[4px]
+            uppercase
+            text-white/70
+            "
+          >
+            Diskon Hingga
+          </span>
+
+          <h1
+            className="
+            text-7xl
+
+            font-black
+
+            leading-none
+            "
+          >
+            20%
+          </h1>
+
+          <p className="text-white/70 mt-2">
+            Limited Time
+          </p>
+
+        </div>
+
+      </motion.div>
+
     </div>
 
-  </div>
+  </motion.div>
 
 </section>
 
 
-        {/* =========================
-            RUNNING TEXT
-        ========================= */}
-        <div className="bg-red-600 py-3 overflow-hidden border-b border-red-400">
+      {/* =========================
+          DISCOUNT SECTION
+      ========================= */}
+      {discountProducts.length > 0 && (
 
-          <div className="whitespace-nowrap animate-[marquee_18s_linear_infinite] text-lg font-bold uppercase flex gap-16">
+        <section className="py-20 px-6">
 
-            <span>🔥 Treadmill Elektrik Murah</span>
-            <span>🚴 Sepeda Statis Murah</span>
-            <span>🏋️ Home Gym Murah</span>
-            <span>🔥 Gratis Ongkir Jabodetabek</span>
-            <span>🛠 Gratis Instalasi</span>
+          <div className="max-w-7xl mx-auto">
 
-          </div>
+            <div className="text-center mb-20">
 
-        </div>
+  {/* BADGE */}
+  <motion.div
+    initial={{
+      opacity: 0,
+      y: -20,
+    }}
 
-        {/* =========================
-            PRODUCTS SECTION
-        ========================= */}
-        <section
-          id="produk"
-          className="relative py-24 px-6 overflow-hidden"
-        >
+    whileInView={{
+      opacity: 1,
+      y: 0,
+    }}
 
-          <div className="absolute top-0 right-0 opacity-10">
-            <Flame size={300} className="text-red-500" />
-          </div>
+    transition={{
+      duration: 0.6,
+    }}
 
-          <div className="max-w-7xl mx-auto relative z-10">
+    className="
+    inline-flex
+    items-center
+    gap-3
 
-            {/* TITLE */}
-            <div
-              className="text-center mb-20"
-              data-aos="fade-up"
-            >
+    px-7 py-3
 
-              <div
-                className="
-                inline-flex items-center gap-2
-                px-5 py-2
-                rounded-full
-                bg-red-500/10
-                border border-red-500/20
-                text-red-400
-                text-sm
-                font-bold
-                tracking-[3px]
-                uppercase
-                mb-6
-                "
-              >
-                🔥 Best Seller Products
-              </div>
+    rounded-full
 
-              <h2
-                className="
-                text-5xl
-                md:text-7xl
-                font-black
-                tracking-tight
-                leading-none
-                "
-              >
-                PRODUCT
+    bg-gradient-to-r
+    from-red-600/20
+    via-red-500/10
+    to-red-600/20
 
-                <span
-                  className="
-                  block
-                  bg-gradient-to-r
-                  from-red-500
-                  via-red-400
-                  to-red-600
-                  bg-clip-text
-                  text-transparent
-                  "
-                >
-                  COLLECTION
-                </span>
+    border
+    border-red-500/30
 
-              </h2>
+    shadow-[0_0_40px_rgba(239,68,68,0.25)]
 
-            </div>
+    text-red-400
+    text-sm
+    font-black
+    tracking-[4px]
+    uppercase
 
-            {/* FILTER */}
-            <div
-              className="max-w-xl mx-auto mb-16"
-              data-aos="fade-up"
-            >
+    mb-8
+    "
+  >
 
-              <div className="flex justify-center gap-4 mb-10 flex-wrap">
+    <Flame
+      size={18}
+      className="animate-pulse"
+    />
 
-                {[
-                  "All",
-                  "Cardio",
-                  "Strength",
-                  "Commercial",
-                ].map((category) => (
+    Limited Time Offer
 
-                  <button
-                    key={category}
-                    onClick={() => setSelectedCategory(category)}
-                    className={`
-                      px-6 py-3 rounded-2xl font-bold transition-all duration-300
+  </motion.div>
 
-                      ${
-                        selectedCategory === category
-                          ? "bg-red-600 shadow-lg shadow-red-500/30"
-                          : "bg-zinc-800 hover:bg-zinc-700"
-                      }
-                    `}
-                  >
-                    {category}
-                  </button>
+  {/* TITLE */}
+  <motion.h2
+    initial={{
+      opacity: 0,
+      y: 30,
+    }}
 
-                ))}
+    whileInView={{
+      opacity: 1,
+      y: 0,
+    }}
 
-              </div>
+    transition={{
+      duration: 0.8,
+    }}
 
-              <input
-                type="text"
-                placeholder="Cari produk..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="
-                w-full
-                bg-black/70
-                border border-zinc-700
-                rounded-2xl
-                px-6 py-4
-                text-white
-                outline-none
-                focus:border-red-500
-                "
-              />
+    className="
+    text-5xl
+    md:text-7xl
 
-            </div>
+    font-black
+    leading-none
+    "
+  >
 
-            {/* PRODUCT GRID */}
+    MEGA
+
+    <span
+      className="
+      block
+
+      bg-gradient-to-r
+      from-red-500
+      via-white
+      to-red-500
+
+      bg-clip-text
+      text-transparent
+
+      drop-shadow-[0_0_25px_rgba(239,68,68,0.45)]
+      "
+    >
+      DISCOUNT
+    </span>
+
+  </motion.h2>
+
+  {/* SUBTITLE */}
+  <motion.p
+    initial={{
+      opacity: 0,
+      y: 20,
+    }}
+
+    whileInView={{
+      opacity: 1,
+      y: 0,
+    }}
+
+    transition={{
+      duration: 1,
+    }}
+
+    className="
+    mt-6
+
+    text-zinc-400
+    text-lg
+    md:text-xl
+
+    max-w-2xl
+    mx-auto
+
+    leading-relaxed
+    "
+  >
+    Dapatkan harga spesial untuk alat fitness premium
+    dengan kualitas terbaik dan promo terbatas hari ini.
+  </motion.p>
+
+</div>
+
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
 
-              {products
-                .filter((product) => {
+              {discountProducts.map((product) => {
 
-                  const matchSearch =
-                    product.name
-                      .toLowerCase()
-                      .includes(search.toLowerCase());
+                const originalPrice =
+                  product.price /
+                  (1 - product.discount / 100);
 
-                  const matchCategory =
-                    selectedCategory === "All"
-                      ? true
-                      : product.category === selectedCategory;
-
-                  return matchSearch && matchCategory;
-
-                })
-
-                .map((product, index) => (
+                return (
 
                   <motion.div
                     key={product.id}
                     whileHover={{
-                      y: -12,
-                      scale: 1.02,
+                      y: -10,
                     }}
-                    transition={{ duration: 0.35 }}
-                    data-aos="fade-up"
-                    data-aos-delay={index * 100}
                     className="
                     relative
+
                     overflow-hidden
-                    rounded-[32px]
-                    bg-gradient-to-b
-                    from-zinc-900
-                    to-black
-                    border border-white/5
-                    hover:border-red-500/40
-                    transition-all duration-500
+
+                    rounded-[30px]
+
+                    bg-zinc-900
+
+                    border
+                    border-red-500/20
                     "
                   >
 
-                    {/* IMAGE */}
-                    <div className="relative overflow-hidden">
+                    {/* DISCOUNT BADGE */}
+                    <div
+                      className="
+                      absolute
+                      top-4
+                      left-4
+                      z-20
 
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        className="
-                        h-[320px]
-                        w-full
-                        object-cover
-                        scale-105
-                        hover:scale-125
-                        transition-all duration-700
-                        "
-                      />
+                      bg-red-600
 
+                      px-4
+                      py-2
+
+                      rounded-full
+
+                      text-sm
+                      font-black
+                      "
+                    >
+                      -{product.discount}%
                     </div>
 
-                    {/* CONTENT */}
-                    <div className="p-7">
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="
+                      h-[280px]
+                      w-full
+                      object-cover
+                      "
+                    />
 
-                      <h3
-                        className="
-                        text-[24px]
-                        leading-tight
-                        font-black
-                        tracking-tight
-                        text-white
-                        min-h-[70px]
-                        "
-                      >
+                    <div className="p-6">
+
+                      <h3 className="text-2xl font-black">
                         {product.name}
                       </h3>
 
-                      <p
-                        className="
-                        mt-5
-                        text-3xl
-                        font-black
-                        bg-gradient-to-r
-                        from-red-500
-                        to-red-300
-                        bg-clip-text
-                        text-transparent
-                        "
-                      >
-                        {product.price}
-                      </p>
+                      <div className="mt-4">
 
-                      {/* BUTTON */}
-                      <div className="mt-7 flex gap-3">
+                        <p className="text-zinc-500 line-through text-lg">
 
-                        <Link
-                          to={`/product/${product.id}`}
-                          className="
-                          flex-1
-                          text-center
-                          bg-zinc-800
-                          hover:bg-zinc-700
-                          px-5 py-3
-                          rounded-2xl
-                          text-sm
-                          font-bold
-                          transition-all duration-300
-                          "
-                        >
-                          Detail Produk
-                        </Link>
+                          {formatPrice(
+                            Math.round(originalPrice)
+                          )}
 
-                        <a
-                          href={`https://wa.me/6285174285688?text=Halo KSPORTS, saya tertarik dengan produk ${product.name}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="
-                          flex-1
-                          text-center
-                          bg-gradient-to-r
-                          from-red-600
-                          to-red-500
-                          hover:from-red-500
-                          hover:to-red-400
-                          px-5 py-3
-                          rounded-2xl
-                          text-sm
-                          font-bold
-                          transition-all duration-300
-                          "
-                        >
-                          Tanya Produk
-                        </a>
+                        </p>
+
+                       <p className="text-3xl font-black text-red-500">
+  {formatPrice(product.price)}
+</p>
+
+{/* PREMIUM BUTTON */}
+<Link
+  to={`/product/${product.id}`}
+  className="
+  mt-6
+
+  group
+
+  relative
+  inline-flex
+
+  items-center
+  justify-center
+
+  w-full
+
+  overflow-hidden
+
+  rounded-2xl
+
+  bg-gradient-to-r
+  from-red-600
+  via-red-500
+  to-red-700
+
+  px-6
+  py-4
+
+  font-black
+  tracking-[2px]
+  uppercase
+  text-white
+
+  shadow-[0_10px_40px_rgba(239,68,68,0.45)]
+
+  transition-all
+  duration-500
+
+  hover:scale-[1.03]
+  hover:shadow-[0_15px_60px_rgba(239,68,68,0.65)]
+  "
+>
+
+  {/* GLOW */}
+  <span
+    className="
+    absolute
+    inset-0
+
+    bg-gradient-to-r
+    from-white/0
+    via-white/20
+    to-white/0
+
+    translate-x-[-120%]
+
+    group-hover:translate-x-[120%]
+
+    transition-transform
+    duration-1000
+    "
+  />
+
+<span className="relative z-10 flex items-center gap-2">
+  Lihat Detail
+
+  <ArrowRight
+    size={18}
+    className="
+    transition-transform
+    duration-300
+    group-hover:translate-x-1
+    "
+  />
+</span>
+
+</Link>
 
                       </div>
 
@@ -740,7 +873,9 @@ export default function App() {
 
                   </motion.div>
 
-                ))}
+                );
+
+              })}
 
             </div>
 
@@ -748,276 +883,502 @@ export default function App() {
 
         </section>
 
-        {/* =========================
-            PREMIUM TESTIMONIAL
-        ========================= */}
-        <section className="relative py-28 overflow-hidden">
+      )}
 
-          {/* BG */}
-          <div className="absolute inset-0 opacity-20">
+      {/* =========================
+          PRODUCTS
+      ========================= */}
+      <section
+        id="produk"
+        className="relative py-24 px-6"
+      >
+
+        <div className="max-w-7xl mx-auto">
+
+          {/* TITLE */}
+          <div className="text-center mb-20">
 
             <div
               className="
-              absolute
-              top-0
-              left-1/2
-              -translate-x-1/2
+              inline-flex
+              items-center
+              gap-2
 
-              w-[500px]
-              h-[500px]
+              px-5
+              py-2
 
               rounded-full
 
-              bg-red-500/20
+              bg-red-500/10
+              border border-red-500/20
 
-              blur-[160px]
+              text-red-400
+              text-sm
+              font-bold
+              tracking-[3px]
+              uppercase
+
+              mb-6
+              "
+            >
+              🔥 Best Seller Products
+            </div>
+
+            <h2
+              className="
+              text-5xl
+              md:text-7xl
+
+              font-black
+              leading-none
+              "
+            >
+
+              PRODUCT
+
+              <span
+                className="
+                block
+
+                bg-gradient-to-r
+                from-red-500
+                via-red-400
+                to-red-600
+
+                bg-clip-text
+                text-transparent
+                "
+              >
+                COLLECTION
+              </span>
+
+            </h2>
+
+          </div>
+
+          {/* CATEGORY */}
+          <div className="flex justify-center gap-4 mb-10 flex-wrap">
+
+            {[
+              "All",
+              "Cardio",
+              "Strength",
+              "Accessories",
+            ].map((category) => (
+
+              <button
+                key={category}
+                onClick={() => {
+
+                  setSelectedCategory(category);
+                  setCurrentPage(1);
+
+                }}
+                className={`
+                  px-6 py-3
+                  rounded-2xl
+                  font-bold
+                  transition-all
+                  duration-300
+
+                  ${
+                    selectedCategory === category
+                      ? "bg-red-600 shadow-lg shadow-red-500/30"
+                      : "bg-zinc-800 hover:bg-zinc-700"
+                  }
+                `}
+              >
+                {category}
+              </button>
+
+            ))}
+
+          </div>
+
+          {/* SEARCH + SORT */}
+          <div
+            className="
+            flex
+            flex-col
+            md:flex-row
+
+            gap-4
+
+            mb-16
+            "
+          >
+
+            {/* SEARCH */}
+            <input
+              type="text"
+              placeholder="Cari produk..."
+              value={search}
+              onChange={(e) => {
+
+                setSearch(e.target.value);
+                setCurrentPage(1);
+
+              }}
+              className="
+              flex-1
+
+              bg-zinc-900
+
+              border border-zinc-700
+
+              rounded-2xl
+
+              px-6 py-4
+
+              text-white
+
+              outline-none
+
+              focus:border-red-500
               "
             />
 
-          </div>
+            {/* SORT */}
+            <select
+              value={sortBy}
+              onChange={(e) => {
 
-          <div className="relative z-10">
+                setSortBy(e.target.value);
+                setCurrentPage(1);
 
-            {/* TITLE */}
-            <div
-              className="text-center mb-20 px-6"
-              data-aos="fade-up"
+              }}
+              className="
+              md:w-[280px]
+
+              bg-zinc-900
+
+              border border-zinc-700
+
+              rounded-2xl
+
+              px-6 py-4
+
+              text-white
+
+              outline-none
+
+              focus:border-red-500
+              "
             >
 
-              <div
-                className="
-                inline-flex
-                items-center
-                gap-2
+              <option value="default">
+                Urutkan Produk
+              </option>
 
-                px-5
-                py-2
+              <option value="lowest">
+                Harga Terendah
+              </option>
 
-                rounded-full
+              <option value="highest">
+                Harga Tertinggi
+              </option>
 
-                bg-red-500/10
-                border border-red-500/20
+              <option value="az">
+                A-Z
+              </option>
 
-                text-red-400
-                text-sm
-                font-bold
-                tracking-[4px]
-                uppercase
-                "
-              >
-                ⭐ Testimonials
-              </div>
+              <option value="za">
+                Z-A
+              </option>
 
-              <h2
-                className="
-                text-5xl
-                md:text-7xl
+            </select>
 
-                font-black
+          </div>
 
-                mt-8
-                leading-none
-                "
-              >
-                WHAT CLIENTS
+          {/* PRODUCT GRID */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
 
-                <span
-                  className="
-                  block
+            {currentProducts.map((product, index) => {
 
-                  bg-gradient-to-r
-                  from-red-500
-                  via-red-300
-                  to-red-600
+              const originalPrice =
+                product.discount > 0
+                  ? product.price /
+                    (1 - product.discount / 100)
+                  : null;
 
-                  bg-clip-text
-                  text-transparent
-                  "
+              return (
+
+                <motion.div
+                  key={product.id}
+                  whileHover={{
+                    y: -10,
+                    scale: 1.02,
+                  }}
+                  transition={{ duration: 0.35 }}
+                  data-aos="fade-up"
+                  data-aos-delay={index * 100}
                 >
-                  SAY ABOUT US
-                </span>
 
-              </h2>
-
-            </div>
-
-            {/* SLIDER */}
-            <div className="overflow-hidden">
-
-              <div
-                className="
-                flex
-                gap-8
-                w-max
-
-                testimonial-scroll
-                "
-              >
-
-                {[...testimonials, ...testimonials].map((item, index) => (
-
-                  <div
-                    key={index}
+                  <Link
+                    to={`/product/${product.id}`}
                     className="
-                    relative
-
-                    w-[380px]
-
-                    rounded-[36px]
-
-                    bg-gradient-to-b
-                    from-zinc-900
-                    to-black
-
-                    border
-                    border-white/5
-
-                    p-8
+                    block
 
                     overflow-hidden
 
-                    hover:border-red-500/40
+                    rounded-[32px]
 
-                    transition-all
-                    duration-500
+                    bg-zinc-900
+
+                    border
+                    border-white/5
                     "
                   >
 
-                    {/* QUOTE ICON */}
-                    <div
-                      className="
-                      absolute
-                      top-5
-                      right-5
+                    {/* DISCOUNT BADGE */}
+                    {product.discount > 0 && (
 
-                      opacity-10
-                      "
-                    >
-                      <Quote size={90} />
-                    </div>
-
-                    {/* STARS */}
-                    <div className="flex gap-1 mb-6">
-
-                      {[1, 2, 3, 4, 5].map((star) => (
-
-                        <Star
-                          key={star}
-                          size={18}
-                          className="fill-yellow-400 text-yellow-400"
-                        />
-
-                      ))}
-
-                    </div>
-
-                    {/* TEXT */}
-                    <p
-                      className="
-                      text-zinc-300
-                      leading-relaxed
-                      text-lg
-                      "
-                    >
-                      “{item.text}”
-                    </p>
-
-                    {/* USER */}
-                    <div className="mt-8 flex items-center gap-4">
-
-                      {/* AVATAR */}
                       <div
                         className="
-                        w-14
-                        h-14
+                        absolute
+                        m-4
+
+                        bg-red-600
+
+                        px-3
+                        py-1
 
                         rounded-full
 
-                        bg-gradient-to-br
-                        from-red-500
-                        to-red-700
-
-                        flex
-                        items-center
-                        justify-center
-
-                        text-xl
+                        text-sm
                         font-black
+                        z-10
                         "
                       >
-                        {item.name.charAt(0)}
+                        -{product.discount}%
                       </div>
 
-                      <div>
+                    )}
 
-                        <h3 className="font-bold text-lg">
-                          {item.name}
-                        </h3>
+                    {/* IMAGE */}
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="
+                      h-[320px]
+                      w-full
 
-                        <p className="text-zinc-500 text-sm">
-                          {item.city}
+                      object-cover
+                      "
+                    />
+
+                    {/* CONTENT */}
+                    <div className="p-7">
+
+                      <h3 className="text-2xl font-black">
+                        {product.name}
+                      </h3>
+
+                      {product.discount > 0 ? (
+
+                        <>
+                          <p className="line-through text-zinc-500 mt-4 text-lg">
+
+                            {formatPrice(
+                              Math.round(originalPrice)
+                            )}
+
+                          </p>
+
+                          <p className="text-3xl font-black text-red-500">
+
+                            {formatPrice(product.price)}
+
+                          </p>
+                        </>
+
+                      ) : (
+
+                        <p className="text-3xl font-black text-red-500 mt-4">
+                          {formatPrice(product.price)}
                         </p>
 
-                      </div>
+                      )}
 
                     </div>
 
-                  </div>
+                  </Link>
 
-                ))}
+                </motion.div>
 
-              </div>
+              );
 
-            </div>
+            })}
 
           </div>
 
-        </section>
+          {/* =========================
+              PAGINATION
+          ========================= */}
+          {totalPages > 1 && (
 
-        {/* =========================
-    BEFORE AFTER CUSTOMER
+            <div className="flex justify-center gap-3 mt-20 flex-wrap">
+
+              {/* PREV */}
+              <button
+                onClick={() =>
+                  setCurrentPage((prev) =>
+                    Math.max(prev - 1, 1)
+                  )
+                }
+
+                disabled={currentPage === 1}
+
+                className="
+                px-5 py-3
+
+                rounded-2xl
+
+                bg-zinc-800
+                hover:bg-zinc-700
+
+                disabled:opacity-40
+
+                font-bold
+                "
+              >
+                Prev
+              </button>
+
+              {/* PAGE */}
+              {[...Array(totalPages)].map((_, index) => {
+
+                const page = index + 1;
+
+                return (
+
+                  <button
+                    key={page}
+                    onClick={() =>
+                      setCurrentPage(page)
+                    }
+
+                    className={`
+                      w-12
+                      h-12
+
+                      rounded-2xl
+
+                      font-bold
+
+                      transition-all
+
+                      ${
+                        currentPage === page
+                          ? "bg-red-600 text-white shadow-lg shadow-red-500/30"
+                          : "bg-zinc-800 hover:bg-zinc-700"
+                      }
+                    `}
+                  >
+                    {page}
+                  </button>
+
+                );
+
+              })}
+
+              {/* NEXT */}
+              <button
+                onClick={() =>
+                  setCurrentPage((prev) =>
+                    Math.min(prev + 1, totalPages)
+                  )
+                }
+
+                disabled={currentPage === totalPages}
+
+                className="
+                px-5 py-3
+
+                rounded-2xl
+
+                bg-zinc-800
+                hover:bg-zinc-700
+
+                disabled:opacity-40
+
+                font-bold
+                "
+              >
+                Next
+              </button>
+
+            </div>
+
+          )}
+
+        </div>
+
+      </section>
+
+      {/* =========================
+    PREMIUM TESTIMONIAL
 ========================= */}
-<section className="relative py-32 px-6 overflow-hidden">
+<section className="relative py-32 overflow-hidden">
 
-  {/* BG EFFECT */}
-  <div className="absolute inset-0 opacity-20">
+  {/* BG GLOW */}
+  <div
+    className="
+    absolute
+    top-0
+    left-0
 
-    <div
-      className="
-      absolute
-      bottom-0
-      left-1/2
-      -translate-x-1/2
+    w-[500px]
+    h-[500px]
 
-      w-[600px]
-      h-[600px]
+    bg-red-600/10
 
-      rounded-full
+    blur-[180px]
+    "
+  />
 
-      bg-red-500/10
+  <div
+    className="
+    absolute
+    bottom-0
+    right-0
 
-      blur-[180px]
-      "
-    />
+    w-[500px]
+    h-[500px]
 
-  </div>
+    bg-red-500/10
 
-  <div className="max-w-7xl mx-auto relative z-10">
+    blur-[180px]
+    "
+  />
 
-    {/* TITLE */}
-    <div
-      className="text-center mb-24"
-      data-aos="fade-up"
-    >
+  <div className="relative z-10">
 
-      <div
+    {/* HEADING */}
+    <div className="text-center mb-20 px-6">
+
+      {/* BADGE */}
+      <motion.div
+        initial={{
+          opacity: 0,
+          y: -20,
+        }}
+
+        whileInView={{
+          opacity: 1,
+          y: 0,
+        }}
+
+        transition={{
+          duration: 0.6,
+        }}
+
         className="
         inline-flex
         items-center
-        gap-2
+        gap-3
 
-        px-5
-        py-2
+        px-7 py-3
 
         rounded-full
 
@@ -1026,26 +1387,49 @@ export default function App() {
 
         text-red-400
         text-sm
-        font-bold
+        font-black
         tracking-[4px]
         uppercase
+
+        mb-8
         "
       >
-        🔥 Customer Transformation
-      </div>
 
-      <h2
+        <Star
+          size={16}
+          className="fill-red-500 text-red-500"
+        />
+
+        Customer Reviews
+
+      </motion.div>
+
+      {/* TITLE */}
+      <motion.h2
+        initial={{
+          opacity: 0,
+          y: 20,
+        }}
+
+        whileInView={{
+          opacity: 1,
+          y: 0,
+        }}
+
+        transition={{
+          duration: 0.8,
+        }}
+
         className="
         text-5xl
         md:text-7xl
 
         font-black
-
-        mt-8
         leading-none
         "
       >
-        BEFORE & AFTER
+
+        WHAT OUR
 
         <span
           className="
@@ -1053,205 +1437,227 @@ export default function App() {
 
           bg-gradient-to-r
           from-red-500
-          via-red-300
-          to-red-600
+          via-white
+          to-red-500
 
           bg-clip-text
           text-transparent
           "
         >
-          KSPORTS
+          CLIENTS SAY
         </span>
 
-      </h2>
+      </motion.h2>
 
-      <p
+      {/* SUBTITLE */}
+      <motion.p
+        initial={{
+          opacity: 0,
+          y: 20,
+        }}
+
+        whileInView={{
+          opacity: 1,
+          y: 0,
+        }}
+
+        transition={{
+          duration: 1,
+        }}
+
         className="
-        text-zinc-400
-        max-w-2xl
+        mt-6
+
+        max-w-3xl
         mx-auto
-        mt-8
+
+        text-zinc-400
         text-lg
+        md:text-xl
+
         leading-relaxed
         "
       >
-        Ribuan customer telah membangun home gym impian bersama KSPORTS dengan harga terbaik dan kualitas premium.
-      </p>
+        Ribuan customer mempercayakan kebutuhan fitness mereka
+        kepada KSPORTS karena kualitas premium dan pelayanan terbaik.
+      </motion.p>
 
     </div>
 
-    {/* GRID */}
-    <div className="grid lg:grid-cols-3 gap-10">
+    {/* SCROLL AREA */}
+    <div className="overflow-hidden">
 
-      {/* ITEM */}
-      {[
-        {
-          before:
-            "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=1200&auto=format&fit=crop",
-          after:
-            "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?q=80&w=1200&auto=format&fit=crop",
-          title: "Home Gym Setup",
-        },
+      <div
+        className="
+        flex
+        gap-8
+        w-max
 
-        {
-          before:
-            "https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=1200&auto=format&fit=crop",
-          after:
-            "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1200&auto=format&fit=crop",
-          title: "Commercial Gym",
-        },
+        testimonial-scroll
+        "
+      >
 
-        {
-          before:
-            "https://images.unsplash.com/photo-1517963879433-6ad2b056d712?q=80&w=1200&auto=format&fit=crop",
-          after:
-            "https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?q=80&w=1200&auto=format&fit=crop",
-          title: "Fitness Corner",
-        },
-      ].map((item, index) => (
+        {[...testimonials, ...testimonials].map((item, index) => (
 
-        <motion.div
-          key={index}
-          whileHover={{
-            y: -10,
-            scale: 1.02,
-          }}
-          transition={{ duration: 0.4 }}
-          data-aos="fade-up"
-          data-aos-delay={index * 150}
-          className="
-          relative
+          <motion.div
+            key={index}
 
-          overflow-hidden
+            whileHover={{
+              y: -12,
+              scale: 1.02,
+            }}
 
-          rounded-[36px]
+            transition={{
+              duration: 0.35,
+            }}
 
-          bg-gradient-to-b
-          from-zinc-900
-          to-black
+            className="
+            relative
 
-          border
-          border-white/5
+            w-[380px]
 
-          hover:border-red-500/30
+            overflow-hidden
 
-          transition-all
-          duration-500
-          "
-        >
+            rounded-[36px]
 
-          {/* BEFORE */}
-          <div className="relative overflow-hidden">
+            border
+            border-white/10
 
-            <img
-              src={item.before}
-              alt="Before"
-              className="
-              w-full
-              h-[260px]
+            bg-white/[0.04]
 
-              object-cover
+            backdrop-blur-2xl
 
-              hover:scale-110
+            p-10
 
-              transition-all
-              duration-700
-              "
-            />
+            shadow-[0_20px_80px_rgba(0,0,0,0.45)]
 
+            group
+            "
+          >
+
+            {/* HOVER GLOW */}
             <div
               className="
               absolute
-              top-5
-              left-5
+              inset-0
 
-              px-4
-              py-2
-
-              rounded-full
-
-              bg-black/70
-              backdrop-blur-md
-
-              text-white
-              text-sm
-              font-bold
-              "
-            >
-              BEFORE
-            </div>
-
-          </div>
-
-          {/* AFTER */}
-          <div className="relative overflow-hidden">
-
-            <img
-              src={item.after}
-              alt="After"
-              className="
-              w-full
-              h-[260px]
-
-              object-cover
-
-              hover:scale-110
+              opacity-0
+              group-hover:opacity-100
 
               transition-all
-              duration-700
+              duration-500
+
+              bg-gradient-to-br
+              from-red-500/10
+              via-transparent
+              to-red-500/5
               "
             />
 
+            {/* QUOTE */}
             <div
               className="
               absolute
-              top-5
-              left-5
+              top-6
+              right-6
 
-              px-4
-              py-2
-
-              rounded-full
-
-              bg-red-600
-
-              text-white
-              text-sm
-              font-bold
+              opacity-10
               "
             >
-              AFTER
+              <Quote size={80} />
             </div>
 
-          </div>
+            {/* AVATAR */}
+            <div className="flex items-center gap-4">
 
-          {/* CONTENT */}
-          <div className="p-8">
+              <div
+                className="
+                w-16
+                h-16
 
-            <h3
-              className="
-              text-3xl
-              font-black
-              "
-            >
-              {item.title}
-            </h3>
+                rounded-full
 
+                bg-gradient-to-br
+                from-red-500
+                to-red-700
+
+                flex
+                items-center
+                justify-center
+
+                text-2xl
+                font-black
+                "
+              >
+                {item.name.charAt(0)}
+              </div>
+
+              <div>
+
+                <h3 className="font-black text-xl">
+                  {item.name}
+                </h3>
+
+                <p className="text-zinc-400 text-sm">
+                  {item.city}
+                </p>
+
+              </div>
+
+            </div>
+
+            {/* STARS */}
+            <div className="flex gap-1 mt-8">
+
+              {[1, 2, 3, 4, 5].map((star) => (
+
+                <Star
+                  key={star}
+                  size={18}
+                  className="
+                  fill-yellow-400
+                  text-yellow-400
+                  "
+                />
+
+              ))}
+
+            </div>
+
+            {/* TEXT */}
             <p
               className="
-              text-zinc-400
-              mt-4
+              mt-6
+
+              text-zinc-300
+              text-lg
+
               leading-relaxed
               "
             >
-              Upgrade gym setup customer menjadi lebih premium, modern, dan profesional menggunakan produk KSPORTS.
+              “{item.text}”
             </p>
 
-          </div>
+            {/* BOTTOM LINE */}
+            <div
+              className="
+              mt-8
 
-        </motion.div>
+              h-[2px]
+              w-full
 
-      ))}
+              bg-gradient-to-r
+              from-red-500
+              via-red-300
+              to-transparent
+              "
+            />
+
+          </motion.div>
+
+        ))}
+
+      </div>
 
     </div>
 
@@ -1259,139 +1665,43 @@ export default function App() {
 
 </section>
 
-        {/* FOOTER */}
-        <Footer />
+      <Footer />
 
-      </div>
-
-      {/* =========================
-          PREMIUM WHATSAPP POPUP
-      ========================= */}
+      {/* WHATSAPP */}
       <a
         href="https://wa.me/6285174285688"
         target="_blank"
         rel="noreferrer"
         className="
+        whatsapp-float
+
         fixed
         bottom-6
         right-6
-        z-50
-
-        group
+        z-[999]
         "
       >
 
         <div
           className="
-          relative
+          w-[75px]
+          h-[75px]
+
+          rounded-full
+
+          bg-green-500
 
           flex
           items-center
-          gap-4
+          justify-center
 
-          px-5
-          py-4
-
-          rounded-3xl
-
-          bg-gradient-to-br
-          from-zinc-900
-          to-black
-
-          border
-          border-green-500/30
-
-          shadow-[0_0_40px_rgba(34,197,94,0.25)]
-
-          backdrop-blur-xl
-
-          hover:scale-105
-          hover:border-green-400/60
-          hover:shadow-[0_0_60px_rgba(34,197,94,0.45)]
-
-          transition-all
-          duration-500
+          shadow-[0_15px_60px_rgba(34,197,94,0.55)]
           "
         >
 
-          {/* ONLINE DOT */}
-          <div
-            className="
-            absolute
-            top-3
-            right-3
-
-            w-3
-            h-3
-
-            rounded-full
-            bg-green-400
-
-            animate-pulse
-            "
-          />
-
-          {/* ICON */}
-          <div
-            className="
-            w-14
-            h-14
-
-            rounded-2xl
-
-            bg-green-500
-
-            flex
-            items-center
-            justify-center
-
-            shadow-[0_0_30px_rgba(34,197,94,0.6)]
-            "
-          >
-
-            <MessageCircle
-              size={30}
-              className="text-white"
-            />
-
-          </div>
-
-          {/* TEXT */}
-          <div>
-
-            <p className="text-zinc-400 text-sm">
-              Customer Service
-            </p>
-
-            <h3 className="text-white font-bold text-lg leading-none mt-1">
-              Chat WhatsApp
-            </h3>
-
-            <p className="text-green-400 text-sm mt-1">
-              Online • Fast Response
-            </p>
-
-          </div>
-
-          {/* SHINE EFFECT */}
-          <div
-            className="
-            absolute
-            inset-0
-
-            rounded-3xl
-
-            opacity-0
-            group-hover:opacity-100
-
-            transition-all
-            duration-700
-
-            bg-gradient-to-r
-            from-transparent
-            via-white/5
-            to-transparent
-            "
+          <MessageCircle
+            size={34}
+            className="text-white"
           />
 
         </div>

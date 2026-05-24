@@ -12,3 +12,10 @@ npm-debug.log*
 
 # system files
 .DS_Store
+
+
+# Production
+dist
+.env.local
+.env.production
+.vercel

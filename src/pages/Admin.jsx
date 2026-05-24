@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-
 import { useNavigate } from "react-router-dom";
 
 import { signOut } from "firebase/auth";
@@ -13,9 +12,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 
-import {
-  LogOut,
-} from "lucide-react";
+import { LogOut } from "lucide-react";
 
 import { auth, db } from "../pages/firebase";
 
@@ -28,20 +25,35 @@ export default function Admin() {
   ========================= */
 
   const [name, setName] = useState("");
-
   const [price, setPrice] = useState("");
-
-  const [image, setImage] = useState("");
-
   const [category, setCategory] = useState("");
+  const [specification, setSpecification] = useState("");
+
+  const [images, setImages] = useState([]);
 
   const [products, setProducts] = useState([]);
 
   const [editingId, setEditingId] = useState(null);
-
+  const [description, setDescription] = useState("");
   const [uploading, setUploading] = useState(false);
-
   const [loading, setLoading] = useState(false);
+
+  /* =========================
+     FORMAT PRICE
+  ========================= */
+
+  const formatPrice = (price) => {
+
+    return new Intl.NumberFormat(
+      "id-ID",
+      {
+        style: "currency",
+        currency: "IDR",
+        minimumFractionDigits: 0,
+      }
+    ).format(price);
+
+  };
 
   /* =========================
      FETCH PRODUCTS
@@ -89,37 +101,53 @@ export default function Admin() {
   };
 
   /* =========================
-     UPLOAD IMAGE CLOUDINARY
+     IMAGE UPLOAD
   ========================= */
 
-  const handleImageUpload = async (file) => {
+  const handleImageUpload = async (files) => {
 
-    if (!file) return;
+    if (!files.length) return;
+
+    if (files.length > 5) {
+
+      alert("Maksimal upload 5 gambar");
+
+      return;
+
+    }
 
     try {
 
       setUploading(true);
 
-      const formData = new FormData();
+      const uploadedImages = [];
 
-      formData.append("file", file);
+      for (const file of files) {
 
-      formData.append(
-        "upload_preset",
-        "ksports_upload"
-      );
+        const formData = new FormData();
 
-      const response = await fetch(
-        "https://api.cloudinary.com/v1_1/dpyhp3o66/image/upload",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+        formData.append("file", file);
 
-      const data = await response.json();
+        formData.append(
+          "upload_preset",
+          "ksports_upload"
+        );
 
-      setImage(data.secure_url);
+        const response = await fetch(
+          "https://api.cloudinary.com/v1_1/dpyhp3o66/image/upload",
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
+
+        const data = await response.json();
+
+        uploadedImages.push(data.secure_url);
+
+      }
+
+      setImages(uploadedImages);
 
     } catch (error) {
 
@@ -141,15 +169,41 @@ export default function Admin() {
 
   const resetForm = () => {
 
-    setName("");
+  setName("");
+  setPrice("");
+  setCategory("");
+  setSpecification("");
+  setDescription("");
 
-    setPrice("");
+  setImages([]);
 
-    setImage("");
+  setEditingId(null);
 
-    setCategory("");
+};
 
-    setEditingId(null);
+  /* =========================
+     VALIDATE FORM
+  ========================= */
+
+  const validateForm = () => {
+
+    if (
+      !name ||
+      !price ||
+      !category ||
+      !description ||
+      !specification ||
+      images.length === 0
+    )
+    {
+
+      alert("Isi semua data");
+
+      return false;
+
+    }
+
+    return true;
 
   };
 
@@ -159,25 +213,26 @@ export default function Admin() {
 
   const handleAddProduct = async () => {
 
-    if (!name || !price || !image || !category) {
-
-      alert("Isi semua data");
-
-      return;
-
-    }
+    if (!validateForm()) return;
 
     try {
 
       setLoading(true);
 
       await addDoc(
-        collection(db, "products"),
-        {
-          name,
-          price,
-          image,
-          category,
+      collection(db, "products"),
+      {
+        name,
+        price: Number(price),
+        category,
+        description,
+        specification,
+
+          image: images[0],
+
+          images: images,
+
+          createdAt: new Date(),
         }
       );
 
@@ -191,7 +246,7 @@ export default function Admin() {
 
       console.log(error);
 
-      alert("Gagal menambahkan produk");
+      alert("Gagal tambah produk");
 
     } finally {
 
@@ -208,7 +263,7 @@ export default function Admin() {
   const handleDelete = async (id) => {
 
     const confirmDelete = window.confirm(
-      "Yakin ingin menghapus produk ini?"
+      "Yakin ingin menghapus produk?"
     );
 
     if (!confirmDelete) return;
@@ -218,8 +273,6 @@ export default function Admin() {
       await deleteDoc(
         doc(db, "products", id)
       );
-
-      alert("Produk berhasil dihapus");
 
       fetchProducts();
 
@@ -241,9 +294,16 @@ export default function Admin() {
 
     setPrice(product.price);
 
-    setImage(product.image);
-
     setCategory(product.category);
+
+    setSpecification(
+      product.specification || ""
+    );
+    setDescription(
+    product.description || ""
+    );
+
+    setImages(product.images || []);
 
     setEditingId(product.id);
 
@@ -260,25 +320,26 @@ export default function Admin() {
 
   const handleUpdate = async () => {
 
-    if (!name || !price || !image || !category) {
-
-      alert("Isi semua data");
-
-      return;
-
-    }
+    if (!validateForm()) return;
 
     try {
 
       setLoading(true);
 
       await updateDoc(
-        doc(db, "products", editingId),
-        {
-          name,
-          price,
-          image,
-          category,
+      doc(db, "products", editingId),
+      {
+        name,
+        price: Number(price),
+        category,
+        description,
+        specification,
+
+          image: images[0],
+
+          images: images,
+
+          updatedAt: new Date(),
         }
       );
 
@@ -307,17 +368,7 @@ export default function Admin() {
     <div className="min-h-screen bg-black text-white p-10">
 
       {/* HEADER */}
-      <div
-        className="
-        flex
-        flex-col
-        md:flex-row
-        md:items-center
-        md:justify-between
-        gap-5
-        mb-10
-        "
-      >
+      <div className="flex justify-between items-center mb-10">
 
         <div>
 
@@ -331,31 +382,15 @@ export default function Admin() {
 
         </div>
 
-        {/* LOGOUT */}
         <button
           onClick={handleLogout}
           className="
-          flex
-          items-center
-          gap-3
-
-          px-6
-          py-4
-
+          flex items-center gap-3
+          px-6 py-4
           rounded-2xl
-
-          bg-gradient-to-r
-          from-red-600
-          to-red-500
-
-          hover:scale-105
-
-          transition-all
-          duration-300
-
+          bg-red-600
+          hover:bg-red-700
           font-bold
-
-          shadow-[0_0_30px_rgba(239,68,68,0.35)]
           "
         >
 
@@ -368,18 +403,7 @@ export default function Admin() {
       </div>
 
       {/* FORM */}
-      <div
-        className="
-        bg-zinc-900
-        border
-        border-zinc-800
-
-        rounded-3xl
-
-        p-8
-        mb-10
-        "
-      >
+      <div className="bg-zinc-900 rounded-3xl p-8 mb-10">
 
         <h2 className="text-3xl font-bold mb-6">
 
@@ -401,19 +425,15 @@ export default function Admin() {
             }
             className="
             bg-black
-            border
-            border-zinc-700
-
+            border border-zinc-700
             rounded-2xl
-
-            px-5
-            py-4
+            px-5 py-4
             "
           />
 
           {/* PRICE */}
           <input
-            type="text"
+            type="number"
             placeholder="Harga Produk"
             value={price}
             onChange={(e) =>
@@ -421,13 +441,9 @@ export default function Admin() {
             }
             className="
             bg-black
-            border
-            border-zinc-700
-
+            border border-zinc-700
             rounded-2xl
-
-            px-5
-            py-4
+            px-5 py-4
             "
           />
 
@@ -439,13 +455,9 @@ export default function Admin() {
             }
             className="
             bg-black
-            border
-            border-zinc-700
-
+            border border-zinc-700
             rounded-2xl
-
-            px-5
-            py-4
+            px-5 py-4
             "
           >
 
@@ -461,66 +473,93 @@ export default function Admin() {
               Strength
             </option>
 
-            <option value="Commercial">
-              Commercial
+            <option value="Accessories">
+              Accessories
             </option>
 
           </select>
 
           {/* IMAGE */}
-          <div>
-
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) =>
-                handleImageUpload(
-                  e.target.files[0]
-                )
-              }
-              className="
-              w-full
-
-              bg-black
-              border
-              border-zinc-700
-
-              rounded-2xl
-
-              px-5
-              py-4
-              "
-            />
-
-            {uploading && (
-
-              <p className="text-yellow-400 mt-3">
-                Uploading image...
-              </p>
-
-            )}
-
-          </div>
+          <input
+            type="file"
+            multiple
+            accept="image/*"
+            onChange={(e) =>
+              handleImageUpload(
+                Array.from(e.target.files)
+              )
+            }
+            className="
+            bg-black
+            border border-zinc-700
+            rounded-2xl
+            px-5 py-4
+            "
+          />
 
         </div>
 
-        {/* PREVIEW */}
-        {image && (
+        {/* DESCRIPTION */}
+        <textarea
+          rows="4"
+          placeholder="Deskripsi Produk"
+          value={description}
+          onChange={(e) =>
+            setDescription(e.target.value)
+          }
+          className="
+          mt-5
+          w-full
+          bg-black
+          border border-zinc-700
+          rounded-2xl
+          px-5 py-4
+          resize-none
+          "
+        />
 
-          <img
-            src={image}
-            alt="Preview"
-            className="
-            mt-6
+        {/* SPECIFICATION */}
+        <textarea
+          rows="6"
+          placeholder="Spesifikasi Produk"
+          value={specification}
+          onChange={(e) =>
+            setSpecification(e.target.value)
+          }
+          className="
+          mt-5
+          w-full
+          bg-black
+          border border-zinc-700
+          rounded-2xl
+          px-5 py-4
+          resize-none
+          "
+        />
 
-            h-52
-            w-full
 
-            object-cover
+        {/* IMAGE PREVIEW */}
+        {images.length > 0 && (
 
-            rounded-3xl
-            "
-          />
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-6">
+
+            {images.map((img, index) => (
+
+              <img
+                key={index}
+                src={img}
+                alt="Preview"
+                className="
+                h-40
+                w-full
+                object-cover
+                rounded-2xl
+                "
+              />
+
+            ))}
+
+          </div>
 
         )}
 
@@ -534,20 +573,11 @@ export default function Admin() {
           disabled={loading || uploading}
           className="
           mt-6
-
           bg-red-600
           hover:bg-red-700
-
-          px-8
-          py-4
-
+          px-8 py-4
           rounded-2xl
-
           font-bold
-
-          transition
-
-          disabled:opacity-50
           "
         >
 
@@ -570,11 +600,9 @@ export default function Admin() {
             key={product.id}
             className="
             bg-zinc-900
-            border
-            border-zinc-800
-
             rounded-3xl
             overflow-hidden
+            border border-zinc-800
             "
           >
 
@@ -584,7 +612,6 @@ export default function Admin() {
               className="
               h-64
               w-full
-
               object-cover
               "
             />
@@ -600,7 +627,11 @@ export default function Admin() {
               </p>
 
               <p className="text-red-500 text-xl mt-2">
-                {product.price}
+                {formatPrice(product.price)}
+              </p>
+
+              <p className="text-zinc-400 mt-4 whitespace-pre-line">
+                {product.specification}
               </p>
 
               {/* EDIT */}
@@ -610,19 +641,12 @@ export default function Admin() {
                 }
                 className="
                 mt-5
-
                 w-full
-
                 bg-blue-600
                 hover:bg-blue-700
-
                 py-3
-
                 rounded-2xl
-
                 font-bold
-
-                transition
                 "
               >
                 Edit Produk
@@ -635,19 +659,12 @@ export default function Admin() {
                 }
                 className="
                 mt-4
-
                 w-full
-
                 bg-red-600
                 hover:bg-red-700
-
                 py-3
-
                 rounded-2xl
-
                 font-bold
-
-                transition
                 "
               >
                 Delete Produk

@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { Toaster } from "react-hot-toast";
+import { HelmetProvider } from "react-helmet-async";
 
 import {
   BrowserRouter,
@@ -19,7 +20,9 @@ import ProductDetail from "./pages/ProductDetail";
 import Products from "./pages/Products";
 import Contact from "./pages/Contact";
 import Cart from "./pages/Cart";
+
 import ProtectedRoute from "../components/ProtectedRoute";
+
 import { CartProvider } from "./context/CartContext";
 
 ReactDOM.createRoot(
@@ -28,95 +31,99 @@ ReactDOM.createRoot(
 
   <React.StrictMode>
 
-    <CartProvider>
+    <HelmetProvider>
 
-      <BrowserRouter>
+      <CartProvider>
 
-        {/* TOAST */}
-        <Toaster
-          position="top-right"
-          reverseOrder={false}
-          toastOptions={{
+        <BrowserRouter>
 
-            style: {
-              background: "#111111",
-              color: "#ffffff",
-              border: "1px solid #27272a",
-              borderRadius: "18px",
-              padding: "16px",
-              fontWeight: "700",
-            },
+          {/* TOAST */}
+          <Toaster
+            position="top-right"
+            reverseOrder={false}
+            toastOptions={{
 
-            success: {
               style: {
-                border: "1px solid #22c55e",
-                boxShadow:
-                  "0 0 25px rgba(34,197,94,0.25)",
+                background: "#111111",
+                color: "#ffffff",
+                border: "1px solid #27272a",
+                borderRadius: "18px",
+                padding: "16px",
+                fontWeight: "700",
               },
-            },
 
-            error: {
-              style: {
-                border: "1px solid #ef4444",
-                boxShadow:
-                  "0 0 25px rgba(239,68,68,0.25)",
+              success: {
+                style: {
+                  border: "1px solid #22c55e",
+                  boxShadow:
+                    "0 0 25px rgba(34,197,94,0.25)",
+                },
               },
-            },
 
-          }}
-        />
+              error: {
+                style: {
+                  border: "1px solid #ef4444",
+                  boxShadow:
+                    "0 0 25px rgba(239,68,68,0.25)",
+                },
+              },
 
-        <Routes>
-
-          <Route
-            path="/"
-            element={<App />}
+            }}
           />
 
-          <Route
-            path="/login"
-            element={<Login />}
-          />
+          <Routes>
 
-          <Route
-            path="/about"
-            element={<About />}
-          />
+            <Route
+              path="/"
+              element={<App />}
+            />
 
-          <Route
-            path="/products"
-            element={<Products />}
-          />
+            <Route
+              path="/login"
+              element={<Login />}
+            />
 
-          <Route
-            path="/product/:id"
-            element={<ProductDetail />}
-          />
+            <Route
+              path="/about"
+              element={<About />}
+            />
 
-          <Route
-            path="/contact"
-            element={<Contact />}
-          />
+            <Route
+              path="/products"
+              element={<Products />}
+            />
 
-          <Route
-            path="/cart"
-            element={<Cart />}
-          />
+            <Route
+              path="/product/:id"
+              element={<ProductDetail />}
+            />
 
-          <Route
-        path="/admin"
-        element={
-          <ProtectedRoute>
-            <Admin />
-          </ProtectedRoute>
-        }
-        />
+            <Route
+              path="/contact"
+              element={<Contact />}
+            />
 
-        </Routes>
+            <Route
+              path="/cart"
+              element={<Cart />}
+            />
 
-      </BrowserRouter>
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <Admin />
+                </ProtectedRoute>
+              }
+            />
 
-    </CartProvider>
+          </Routes>
+
+        </BrowserRouter>
+
+      </CartProvider>
+
+    </HelmetProvider>
 
   </React.StrictMode>
 

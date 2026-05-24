@@ -9,14 +9,13 @@ import {
 } from "firebase/auth";
 
 const firebaseConfig = {
-
-  apiKey: "AIzaSyClBAPc2bn2gQ6BqZA1ZtapHCLTc-wuy0Q",
-  authDomain: "ksports-abc1d.firebaseapp.com",
-  projectId: "ksports-abc1d",
-  storageBucket: "ksports-abc1d.firebasestorage.app",
-  messagingSenderId: "422467856270",
-  appId: "1:422467856270:web:19b94a2c50240fb8fa66df"
-
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId:
+    import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
 const app = initializeApp(firebaseConfig);

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-
+import { formatPrice } from "../utils/formatPrice";
 import {
   useParams,
   useNavigate,
@@ -58,8 +58,12 @@ export default function ProductDetail() {
           };
 
           setProduct(currentProduct);
+          setSelectedImage(
+            currentProduct.images?.[0] ||
+            currentProduct.image
+          );
 
-          setSelectedImage(currentProduct.image);
+
 
           /* =========================
              FETCH RELATED PRODUCTS
@@ -255,57 +259,46 @@ export default function ProductDetail() {
 
           </div>
 
-          {/* THUMBNAILS */}
-          <div className="grid grid-cols-4 gap-4 mt-5">
+         
+{/* THUMBNAILS */}
+<div className="grid grid-cols-4 gap-4 mt-5">
 
-            {[
-              product.image,
-              product.image2,
-              product.image3,
-              product.image4,
-            ]
+  {(product.images || []).map((img, index) => (
 
-              .filter(Boolean)
+    <button
+      key={index}
+      onClick={() => setSelectedImage(img)}
+      className={`
+        overflow-hidden
+        rounded-2xl
+        border-2
+        transition-all
+        duration-300
 
-              .map((img, index) => (
+        ${
+          selectedImage === img
+            ? "border-red-500 scale-105"
+            : "border-zinc-800 hover:border-zinc-600"
+        }
+      `}
+    >
 
-                <button
-                  key={index}
-                  onClick={() => setSelectedImage(img)}
-                  className={`
-                    overflow-hidden
+      <img
+        src={img}
+        alt={`Thumbnail ${index}`}
+        className="
+        w-full
+        h-24
+        object-cover
+        "
+      />
 
-                    rounded-2xl
+    </button>
 
-                    border-2
+  ))}
 
-                    transition-all
-                    duration-300
+</div>
 
-                    ${
-                      selectedImage === img
-                        ? "border-red-500 scale-105"
-                        : "border-zinc-800 hover:border-zinc-600"
-                    }
-                  `}
-                >
-
-                  <img
-                    src={img}
-                    alt={`Thumbnail ${index}`}
-                    className="
-                    w-full
-                    h-24
-
-                    object-cover
-                    "
-                  />
-
-                </button>
-
-              ))}
-
-          </div>
 
         </div>
 
@@ -372,22 +365,25 @@ export default function ProductDetail() {
             mt-8
             "
           >
-            {product.price}
+            {formatPrice(product.price)}
           </p>
 
-          {/* DESCRIPTION */}
-          <p
-            className="
-            text-zinc-400
+{/* DESCRIPTION */}
+{product.description && (
 
-            mt-8
-            leading-relaxed
-            text-lg
-            "
-          >
-            {product.description ||
-              "Produk fitness premium berkualitas tinggi cocok untuk kebutuhan gym rumahan maupun commercial gym."}
-          </p>
+  <p
+    className="
+    text-zinc-400
+    mt-8
+    leading-relaxed
+    text-lg
+    "
+  >
+    {product.description}
+  </p>
+
+)}
+
 
           {/* BUTTONS */}
           <div className="flex flex-col sm:flex-row gap-4 mt-10">
@@ -478,27 +474,22 @@ export default function ProductDetail() {
           </div>
 
           {/* SPECIFICATION */}
-          <div className="mt-14 border-t border-zinc-800 pt-8">
+{/* SPECIFICATION */}
+<div className="mt-14 border-t border-zinc-800 pt-8">
 
-            <h3 className="text-2xl font-bold mb-6">
-              Spesifikasi
-            </h3>
+  <h3 className="text-2xl font-bold mb-6">
+    Spesifikasi
+  </h3>
 
-            <ul className="space-y-3 text-zinc-400">
+  <div className="space-y-3 text-zinc-400 whitespace-pre-line leading-relaxed">
 
-              <li>✔ Produk Berkualitas Premium</li>
+    {product.specification
+      ? product.specification
+      : "Spesifikasi belum tersedia."}
 
-              <li>✔ Cocok Untuk Gym & Rumahan</li>
+  </div>
 
-              <li>✔ Garansi Resmi</li>
-
-              <li>✔ Gratis Ongkir Jabodetabek</li>
-
-              <li>✔ Free Instalasi</li>
-
-            </ul>
-
-          </div>
+</div>
 
         </div>
 
@@ -588,16 +579,15 @@ export default function ProductDetail() {
                   </h3>
 
                   <p
-                    className="
-                    text-red-500
-                    text-2xl
-                    font-black
-
-                    mt-4
-                    "
-                  >
-                    {item.price}
-                  </p>
+                  className="
+                  text-red-500
+                  text-2xl
+                  font-black
+                  mt-4
+                  "
+                >
+                  {formatPrice(item.price)}
+                </p>
 
                   {/* BUTTON */}
                   <Link
@@ -685,9 +675,8 @@ export default function ProductDetail() {
               </p>
 
               <h3 className="text-2xl font-black text-red-500">
-                {product.price}
-              </h3>
-
+              {formatPrice(product.price)}
+            </h3>
             </div>
 
             <div

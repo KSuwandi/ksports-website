@@ -1,49 +1,82 @@
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 
+import { collection, onSnapshot } from "firebase/firestore";
+import { db } from "../src/pages/firebase";
+
+import {
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+
 export default function HeroSection() {
+
+  /* =========================
+     STATES
+  ========================= */
+  const [products, setProducts] =
+    useState([]);
+
+  const [currentSlide, setCurrentSlide] =
+    useState(0);
 
   /* =========================
      ANIMATION
   ========================= */
   const fadeUp = {
+
     hidden: {
       opacity: 0,
       y: 60,
     },
 
     show: {
+
       opacity: 1,
       y: 0,
 
       transition: {
         duration: 0.8,
       },
+
     },
+
   };
 
   /* =========================
-     CAROUSEL
+     FIREBASE
   ========================= */
-  const [currentSlide, setCurrentSlide] = useState(0);
+  useEffect(() => {
 
-  const images = [
-    "/products/treadmill_dhz.webp",
-    "/products/treadmill_florence.webp",
-    "/products/sepeda_statis.webp",
-    "/products/multismith.webp",
-    "/products/dumble_set.webp",
-  ];
+    const unsubscribe = onSnapshot(
+      collection(db, "products"),
+      (snapshot) => {
+
+        const data = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        setProducts(data);
+
+      }
+    );
+
+    return () => unsubscribe();
+
+  }, []);
 
   /* =========================
      AUTO SLIDE
   ========================= */
   useEffect(() => {
 
+    if (products.length === 0) return;
+
     const interval = setInterval(() => {
 
       setCurrentSlide((prev) =>
-        prev === images.length - 1
+        prev === products.length - 1
           ? 0
           : prev + 1
       );
@@ -52,15 +85,39 @@ export default function HeroSection() {
 
     return () => clearInterval(interval);
 
-  }, [images.length]);
+  }, [products]);
+
+  /* =========================
+     NEXT SLIDE
+  ========================= */
+  const nextSlide = () => {
+
+    setCurrentSlide((prev) =>
+      prev === products.length - 1
+        ? 0
+        : prev + 1
+    );
+
+  };
+
+  /* =========================
+     PREV SLIDE
+  ========================= */
+  const prevSlide = () => {
+
+    setCurrentSlide((prev) =>
+      prev === 0
+        ? products.length - 1
+        : prev - 1
+    );
+
+  };
 
   return (
 
     <section className="relative bg-black text-white overflow-hidden">
 
-      {/* =========================
-          BACKGROUND GLOW
-      ========================= */}
+      {/* BG GLOW */}
       <div
         className="
         absolute
@@ -85,12 +142,12 @@ export default function HeroSection() {
         "
       />
 
-      {/* =========================
-          CONTAINER
-      ========================= */}
+      {/* CONTAINER */}
       <div
         className="
-        relative z-10
+        relative
+        z-10
+
         max-w-7xl
         mx-auto
 
@@ -99,9 +156,9 @@ export default function HeroSection() {
         pb-24
 
         grid
-        md:grid-cols-2
-        gap-16
+        lg:grid-cols-2
 
+        gap-20
         items-center
         "
       >
@@ -113,29 +170,20 @@ export default function HeroSection() {
           variants={fadeUp}
           initial="hidden"
           whileInView="show"
-          viewport={{ once: true, amount: 0.3 }}
+          viewport={{
+            once: true,
+            amount: 0.3,
+          }}
         >
 
           {/* BADGE */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-
-            whileInView={{
-              opacity: 1,
-              y: 0,
-            }}
-
-            transition={{ delay: 0.1 }}
-
-            viewport={{ once: true }}
-
+          <div
             className="
             inline-flex
             items-center
             gap-2
 
             bg-zinc-900/80
-            backdrop-blur-xl
 
             border
             border-red-500/30
@@ -152,24 +200,10 @@ export default function HeroSection() {
             "
           >
             🔥 PROMO GRATIS ONGKIR JABODETABEK
-          </motion.div>
+          </div>
 
           {/* TITLE */}
-          <motion.h1
-            initial={{ opacity: 0, y: 40 }}
-
-            whileInView={{
-              opacity: 1,
-              y: 0,
-            }}
-
-            transition={{
-              delay: 0.2,
-              duration: 0.8,
-            }}
-
-            viewport={{ once: true }}
-
+          <h1
             className="
             text-5xl
             md:text-7xl
@@ -193,8 +227,6 @@ export default function HeroSection() {
 
               bg-clip-text
               text-transparent
-
-              drop-shadow-[0_0_25px_rgba(255,0,0,0.35)]
               "
             >
               PREMIUM
@@ -202,26 +234,13 @@ export default function HeroSection() {
 
             HARGA TERBAIK
 
-          </motion.h1>
+          </h1>
 
           {/* DESCRIPTION */}
-          <motion.p
-            initial={{ opacity: 0, y: 40 }}
-
-            whileInView={{
-              opacity: 1,
-              y: 0,
-            }}
-
-            transition={{
-              delay: 0.35,
-              duration: 0.8,
-            }}
-
-            viewport={{ once: true }}
-
+          <p
             className="
             mt-10
+
             max-w-2xl
 
             text-[18px]
@@ -231,14 +250,10 @@ export default function HeroSection() {
             leading-[2]
 
             text-zinc-300
-
-            tracking-wide
-
-            drop-shadow-[0_0_20px_rgba(255,255,255,0.08)]
             "
           >
 
-            <span className="font-black text-white tracking-[2px]">
+            <span className="font-black text-white">
               KSPORTS
             </span>
 
@@ -246,14 +261,7 @@ export default function HeroSection() {
               {" "}menyediakan berbagai alat fitness premium dengan{" "}
             </span>
 
-            <span
-              className="
-              text-red-400
-              font-semibold
-
-              drop-shadow-[0_0_15px_rgba(255,0,0,0.45)]
-              "
-            >
+            <span className="text-red-400 font-semibold">
               HARGA TERBAIK{" "}
             </span>
 
@@ -269,14 +277,7 @@ export default function HeroSection() {
               {" "}hingga{" "}
             </span>
 
-            <span
-              className="
-              text-red-400
-              font-semibold
-
-              drop-shadow-[0_0_15px_rgba(255,0,0,0.45)]
-              "
-            >
+            <span className="text-red-400 font-semibold">
               COMMERCIAL GYM
             </span>
 
@@ -284,24 +285,10 @@ export default function HeroSection() {
               {" "}dengan kualitas terpercaya dan pelayanan profesional.
             </span>
 
-          </motion.p>
+          </p>
 
           {/* BUTTONS */}
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-
-            whileInView={{
-              opacity: 1,
-              y: 0,
-            }}
-
-            transition={{
-              delay: 0.5,
-              duration: 0.8,
-            }}
-
-            viewport={{ once: true }}
-
+          <div
             className="
             flex
             flex-wrap
@@ -311,16 +298,9 @@ export default function HeroSection() {
             "
           >
 
-            {/* BUTTON 1 */}
             <a
               href="#produk"
-
               className="
-              group
-
-              relative
-              overflow-hidden
-
               bg-gradient-to-r
               from-red-600
               to-red-500
@@ -334,58 +314,22 @@ export default function HeroSection() {
               rounded-2xl
 
               font-bold
-              tracking-wide
 
               transition-all
               duration-300
 
               hover:scale-105
-
-              shadow-lg
-              shadow-red-500/20
               "
             >
-
-              <span className="relative z-10">
-                Lihat Produk
-              </span>
-
-              <span
-                className="
-                absolute
-                top-0
-                left-[-120%]
-
-                w-full
-                h-full
-
-                bg-gradient-to-r
-                from-transparent
-                via-white/20
-                to-transparent
-
-                skew-x-12
-
-                group-hover:left-[120%]
-
-                transition-all
-                duration-1000
-                "
-              />
-
+              Lihat Produk
             </a>
 
-            {/* BUTTON 2 */}
             <a
               href="https://wa.me/6285174285688"
-
               target="_blank"
               rel="noreferrer"
-
               className="
               bg-zinc-900/80
-              backdrop-blur-xl
-
               hover:bg-zinc-800
 
               border
@@ -407,27 +351,14 @@ export default function HeroSection() {
               WhatsApp Kami
             </a>
 
-          </motion.div>
+          </div>
 
           {/* STATS */}
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-
-            whileInView={{
-              opacity: 1,
-              y: 0,
-            }}
-
-            transition={{
-              delay: 0.7,
-              duration: 0.8,
-            }}
-
-            viewport={{ once: true }}
-
+          <div
             className="
             grid
             grid-cols-3
+
             gap-6
 
             mt-14
@@ -488,24 +419,22 @@ export default function HeroSection() {
 
             </div>
 
-          </motion.div>
+          </div>
 
         </motion.div>
 
         {/* =========================
-            RIGHT IMAGE CAROUSEL
+            RIGHT SLIDER
         ========================= */}
         <motion.div
           initial={{
             opacity: 0,
             x: 80,
-            scale: 0.9,
           }}
 
           whileInView={{
             opacity: 1,
             x: 0,
-            scale: 1,
           }}
 
           transition={{
@@ -514,7 +443,6 @@ export default function HeroSection() {
 
           viewport={{
             once: true,
-            amount: 0.3,
           }}
 
           className="
@@ -529,74 +457,154 @@ export default function HeroSection() {
             className="
             absolute
             inset-0
+
             bg-red-500/20
+
             blur-3xl
             rounded-full
             "
           />
 
-          {/* CAROUSEL BOX */}
-          <div
-            className="
-            relative
-            z-10
+          {/* SLIDER */}
+          {products.length > 0 && (
 
-            w-full
-            max-w-[560px]
-
-            h-[560px]
-
-            rounded-[40px]
-
-            bg-gradient-to-br
-            from-zinc-900
-            to-black
-
-            border
-            border-red-500/20
-
-            overflow-hidden
-
-            shadow-[0_0_50px_rgba(255,0,0,0.15)]
-
-            flex
-            items-center
-            justify-center
-            "
-          >
-
-            {/* IMAGE */}
-            <motion.img
-              key={currentSlide}
-              src={images[currentSlide]}
-              alt="Fitness Equipment"
-
-              initial={{
-                opacity: 0,
-                scale: 1.08,
-              }}
-
-              animate={{
-                opacity: 1,
-                scale: 1,
-              }}
-
-              transition={{
-                duration: 0.7,
-              }}
-
+            <div
               className="
+              relative
+              z-10
+
               w-full
-              h-full
+              max-w-[560px]
 
-              object-cover
+              h-[560px]
 
-              transition-all
-              duration-700
+              rounded-[40px]
+
+              overflow-hidden
+
+              bg-gradient-to-br
+              from-zinc-900
+              to-black
+
+              border
+              border-red-500/20
+
+              shadow-[0_0_50px_rgba(255,0,0,0.15)]
               "
-            />
+            >
 
-          </div>
+              {/* IMAGE */}
+              <motion.img
+                key={currentSlide}
+                src={products[currentSlide]?.image}
+                alt={products[currentSlide]?.name}
+
+                initial={{
+                  opacity: 0,
+                  scale: 1.08,
+                }}
+
+                animate={{
+                  opacity: 1,
+                  scale: 1,
+                }}
+
+                transition={{
+                  duration: 0.7,
+                }}
+
+                className="
+                w-full
+                h-full
+
+                object-cover
+                "
+              />
+
+              {/* PRODUCT NAME */}
+              <div
+                className="
+                absolute
+                bottom-0
+                left-0
+                right-0
+
+                p-8
+
+                bg-gradient-to-t
+                from-black
+                to-transparent
+                "
+              >
+
+                <h3
+                  className="
+                  text-3xl
+                  font-black
+                  "
+                >
+                  {products[currentSlide]?.name}
+                </h3>
+
+              </div>
+
+              {/* PREV */}
+              <button
+                onClick={prevSlide}
+                className="
+                absolute
+                left-5
+                top-1/2
+                -translate-y-1/2
+
+                w-12
+                h-12
+
+                rounded-full
+
+                bg-black/50
+                hover:bg-red-600
+
+                flex
+                items-center
+                justify-center
+
+                transition-all
+                "
+              >
+                <ChevronLeft />
+              </button>
+
+              {/* NEXT */}
+              <button
+                onClick={nextSlide}
+                className="
+                absolute
+                right-5
+                top-1/2
+                -translate-y-1/2
+
+                w-12
+                h-12
+
+                rounded-full
+
+                bg-black/50
+                hover:bg-red-600
+
+                flex
+                items-center
+                justify-center
+
+                transition-all
+                "
+              >
+                <ChevronRight />
+              </button>
+
+            </div>
+
+          )}
 
           {/* DOTS */}
           <div
@@ -611,15 +619,18 @@ export default function HeroSection() {
             "
           >
 
-            {images.map((_, index) => (
+            {products.map((_, index) => (
 
               <button
                 key={index}
-                onClick={() => setCurrentSlide(index)}
+                onClick={() =>
+                  setCurrentSlide(index)
+                }
 
                 className={`
                   h-3
                   rounded-full
+
                   transition-all
                   duration-300
 
