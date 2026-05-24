@@ -10,9 +10,6 @@ import {
 
 export default function Navbar() {
 
-  /* =========================
-     CART
-  ========================= */
   const { cart } = useCart();
 
   const totalItems = cart.reduce(
@@ -20,38 +17,17 @@ export default function Navbar() {
     0
   );
 
-  /* =========================
-     MOBILE MENU
-  ========================= */
   const [mobileMenu, setMobileMenu] = useState(false);
 
-  /* =========================
-     MENU STYLE
-  ========================= */
   const menuClass = `
-    text-[17px]
+    text-[16px]
     font-bold
     tracking-wide
     text-zinc-200
     hover:text-red-400
     transition-all
     duration-300
-    relative
     uppercase
-
-    after:absolute
-    after:left-0
-    after:-bottom-3
-    after:w-0
-    after:h-[2px]
-    after:bg-red-500
-    after:rounded-full
-
-    hover:after:w-full
-
-    after:transition-all
-
-    hover:drop-shadow-[0_0_12px_rgba(255,0,0,0.7)]
   `;
 
   return (
@@ -63,45 +39,31 @@ export default function Navbar() {
       left-0
       w-full
       z-50
-
-      bg-black/40
-      backdrop-blur-3xl
-
+      bg-black/70
+      backdrop-blur-2xl
       border-b
       border-red-500/10
-
-      shadow-[0_0_40px_rgba(255,0,0,0.08)]
       "
     >
 
-      {/* CONTAINER */}
       <div
         className="
         max-w-7xl
         mx-auto
-
-        px-6
+        px-4
+        sm:px-6
         lg:px-10
-
-        h-[105px]
-
+        h-[80px]
         flex
         items-center
         justify-between
         "
       >
 
-        {/* =========================
-            LOGO
-        ========================= */}
+        {/* LOGO */}
         <Link
           to="/"
-          className="
-          flex
-          items-center
-          cursor-pointer
-          group
-          "
+          className="flex items-center"
         >
 
           <img
@@ -109,29 +71,21 @@ export default function Navbar() {
             alt="KSPORTS Logo"
 
             className="
-            h-[120px]
-            md:h-[140px]
-
+            h-[70px]
+            sm:h-[85px]
+            md:h-[95px]
             w-auto
             object-contain
-
-            scale-[2.2]
-
             transition-all
             duration-300
-
-            group-hover:scale-[2.3]
-
-            drop-shadow-[0_0_25px_rgba(255,0,0,0.45)]
+            hover:scale-105
             "
           />
 
         </Link>
 
-        {/* =========================
-            DESKTOP MENU
-        ========================= */}
-        <div className="hidden md:flex items-center gap-11">
+        {/* DESKTOP MENU */}
+        <div className="hidden md:flex items-center gap-8 lg:gap-11">
 
           <Link to="/" className={menuClass}>
             Home
@@ -151,12 +105,9 @@ export default function Navbar() {
 
         </div>
 
-        {/* =========================
-            RIGHT SIDE
-        ========================= */}
+        {/* RIGHT SIDE DESKTOP */}
         <div className="hidden md:flex items-center gap-4">
 
-          {/* CART */}
           <Link
             to="/cart"
             className="relative"
@@ -164,22 +115,16 @@ export default function Navbar() {
 
             <div
               className="
-              w-12
-              h-12
-
+              w-11
+              h-11
               flex
               items-center
               justify-center
-
               rounded-2xl
-
               bg-zinc-900
               border
               border-zinc-800
-
               hover:border-red-500/40
-              hover:bg-zinc-800
-
               transition-all
               duration-300
               "
@@ -187,7 +132,6 @@ export default function Navbar() {
               <ShoppingBag size={20} />
             </div>
 
-            {/* BADGE */}
             {totalItems > 0 && (
 
               <span
@@ -195,25 +139,17 @@ export default function Navbar() {
                 absolute
                 -top-2
                 -right-2
-
                 min-w-[22px]
                 h-[22px]
-
                 px-1
-
                 rounded-full
-
                 bg-red-500
                 text-white
-
                 text-xs
                 font-bold
-
                 flex
                 items-center
                 justify-center
-
-                shadow-lg
                 "
               >
                 {totalItems}
@@ -223,7 +159,6 @@ export default function Navbar() {
 
           </Link>
 
-          {/* BUTTON */}
           <a
             href="https://wa.me/6285174285688"
             target="_blank"
@@ -233,24 +168,15 @@ export default function Navbar() {
             bg-gradient-to-r
             from-red-600
             to-red-500
-
             hover:from-red-500
             hover:to-red-400
-
             transition-all
             duration-300
-
-            hover:scale-105
-
-            px-6
+            px-5
             py-3
-
             rounded-2xl
-
             font-bold
-
-            shadow-lg
-            shadow-red-500/20
+            text-sm
             "
           >
             Hubungi Kami
@@ -258,24 +184,18 @@ export default function Navbar() {
 
         </div>
 
-        {/* =========================
-            MOBILE BUTTON
-        ========================= */}
+        {/* MOBILE BUTTON */}
         <button
           onClick={() => setMobileMenu(!mobileMenu)}
 
           className="
           md:hidden
-
-          w-12
-          h-12
-
+          w-11
+          h-11
           rounded-2xl
-
           bg-zinc-900
           border
           border-zinc-800
-
           flex
           items-center
           justify-center
@@ -284,40 +204,34 @@ export default function Navbar() {
 
           {
             mobileMenu
-              ? <X size={28} />
-              : <Menu size={28} />
+              ? <X size={26} />
+              : <Menu size={26} />
           }
 
         </button>
 
       </div>
 
-      {/* =========================
-          MOBILE MENU
-      ========================= */}
+      {/* MOBILE MENU */}
       {
         mobileMenu && (
 
           <div
             className="
             md:hidden
-
             bg-zinc-950/95
             backdrop-blur-xl
-
             border-t
             border-zinc-800
-
-            px-6
-            py-8
-
-            space-y-6
+            px-5
+            py-6
+            space-y-5
             "
           >
 
             <Link
               to="/"
-              className="block text-zinc-300 hover:text-red-500 transition"
+              className="block text-zinc-300 hover:text-red-500 transition text-lg"
               onClick={() => setMobileMenu(false)}
             >
               Home
@@ -325,7 +239,7 @@ export default function Navbar() {
 
             <Link
               to="/products"
-              className="block text-zinc-300 hover:text-red-500 transition"
+              className="block text-zinc-300 hover:text-red-500 transition text-lg"
               onClick={() => setMobileMenu(false)}
             >
               Produk
@@ -333,7 +247,7 @@ export default function Navbar() {
 
             <Link
               to="/about"
-              className="block text-zinc-300 hover:text-red-500 transition"
+              className="block text-zinc-300 hover:text-red-500 transition text-lg"
               onClick={() => setMobileMenu(false)}
             >
               Tentang
@@ -341,13 +255,12 @@ export default function Navbar() {
 
             <Link
               to="/contact"
-              className="block text-zinc-300 hover:text-red-500 transition"
+              className="block text-zinc-300 hover:text-red-500 transition text-lg"
               onClick={() => setMobileMenu(false)}
             >
               Kontak
             </Link>
 
-            {/* MOBILE CART */}
             <Link
               to="/cart"
 
@@ -355,14 +268,10 @@ export default function Navbar() {
               flex
               items-center
               justify-between
-
               bg-zinc-900
-
               border
               border-zinc-800
-
               rounded-2xl
-
               px-5
               py-4
               "
@@ -386,17 +295,12 @@ export default function Navbar() {
                   className="
                   min-w-[24px]
                   h-[24px]
-
                   px-2
-
                   rounded-full
-
                   bg-red-500
                   text-white
-
                   text-xs
                   font-bold
-
                   flex
                   items-center
                   justify-center
@@ -409,91 +313,25 @@ export default function Navbar() {
 
             </Link>
 
-            {/* WHATSAPP BUTTON */}
             <a
               href="https://wa.me/6285174285688"
               target="_blank"
               rel="noreferrer"
 
               className="
-              relative
-              overflow-hidden
-              group
-
               block
-
-              px-7
-              py-3.5
-
+              text-center
+              px-6
+              py-4
               rounded-2xl
-
               bg-gradient-to-r
               from-red-600
-              via-red-500
-              to-red-600
-
+              to-red-500
               text-white
               font-bold
-
-              tracking-wide
-              uppercase
-
-              text-[15px]
-
-              shadow-[0_0_30px_rgba(255,0,0,0.35)]
-
-              transition-all
-              duration-500
-
-              hover:scale-105
-              hover:shadow-[0_0_45px_rgba(255,0,0,0.6)]
               "
             >
-
-              {/* GLOW */}
-              <span
-                className="
-                absolute
-                inset-0
-
-                bg-white/10
-
-                opacity-0
-                group-hover:opacity-100
-
-                transition
-                duration-500
-                "
-              />
-
-              {/* SHINE */}
-              <span
-                className="
-                absolute
-                top-0
-                left-[-120%]
-
-                w-[120%]
-                h-full
-
-                bg-gradient-to-r
-                from-transparent
-                via-white/20
-                to-transparent
-
-                skew-x-12
-
-                group-hover:left-[120%]
-
-                transition-all
-                duration-1000
-                "
-              />
-
-              <span className="relative z-10">
-                Hubungi Kami
-              </span>
-
+              Hubungi Kami
             </a>
 
           </div>
